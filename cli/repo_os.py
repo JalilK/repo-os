@@ -10,6 +10,25 @@ ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "templates"
 DESKTOP = Path.home() / "Desktop"
 
+BASE_COPY_PATHS = [
+    "AGENT.md",
+    "agent",
+    ".github",
+    ".githooks",
+    "scripts/acp",
+    "scripts/check_pr_body.py",
+]
+
+BASE_EXECUTABLES = [
+    ".githooks/pre-push",
+    "scripts/acp/acp.sh",
+    "scripts/acp/generate_pr_body.py",
+    "scripts/acp/update_progress.py",
+    "scripts/acp/context_tools.py",
+    "scripts/acp/doctor.py",
+    "scripts/check_pr_body.py",
+]
+
 def fail(message: str) -> None:
     print(message)
     sys.exit(1)
@@ -20,12 +39,10 @@ def run(cmd: list[str], cwd: Path | None = None) -> None:
 def replace_tokens(path: Path, repo_name: str) -> None:
     if path.is_dir():
         return
-
     try:
         text = path.read_text()
     except UnicodeDecodeError:
         return
-
     bundle_id = f"com.example.{repo_name}"
     text = text.replace("APPNAME", repo_name)
     text = text.replace("BUNDLE_ID", bundle_id)
@@ -37,10 +54,22 @@ def rename_paths(root: Path, repo_name: str) -> None:
         new_name = path.name.replace("APPNAME", repo_name)
         path.rename(path.with_name(new_name))
 
-def copy_template(src: Path, dest: Path) -> None:
+def copy_tree(src: Path, dest: Path) -> None:
     if not src.exists():
-        fail(f"Template not found: {src}")
+        fail(f"Template path not found {src}")
     shutil.copytree(src, dest, dirs_exist_ok=True)
+
+def copy_file(src: Path, dest: Path) -> None:
+    if not src.exists():
+        fail(f"Template file not found {src}")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dest)
+
+def ensure_executables(repo_path: Path) -> None:
+    for relative in BASE_EXECUTABLES:
+        target = repo_path / relative
+        if target.exists():
+            target.chmod(0o755)
 
 def initialize_repo_files(stack: str, repo_name: str) -> Path:
     if stack != "swift-ios":
@@ -52,24 +81,15 @@ def initialize_repo_files(stack: str, repo_name: str) -> Path:
 
     destination.mkdir(parents=True)
 
-    copy_template(TEMPLATES / "base", destination)
-    copy_template(TEMPLATES / "swift-ios", destination)
+    copy_tree(TEMPLATES / "base", destination)
+    copy_tree(TEMPLATES / "swift-ios", destination)
 
     rename_paths(destination, repo_name)
 
     for path in destination.rglob("*"):
         replace_tokens(path, repo_name)
 
-    for relative in [
-        ".githooks/pre-push",
-        "scripts/acp/acp.sh",
-        "scripts/acp/generate_pr_body.py",
-        "scripts/check_pr_body.py",
-    ]:
-        target = destination / relative
-        if target.exists():
-            target.chmod(0o755)
-
+    ensure_executables(destination)
     return destination
 
 def bootstrap_repo_path(destination: Path) -> None:
@@ -80,16 +100,7 @@ def bootstrap_repo_path(destination: Path) -> None:
         run(["git", "init"], cwd=destination)
 
     run(["git", "config", "core.hooksPath", ".githooks"], cwd=destination)
-
-    for relative in [
-        ".githooks/pre-push",
-        "scripts/acp/acp.sh",
-        "scripts/acp/generate_pr_body.py",
-        "scripts/check_pr_body.py",
-    ]:
-        target = destination / relative
-        if target.exists():
-            target.chmod(0o755)
+    ensure_executables(destination)
 
     has_commit = subprocess.run(
         ["git", "rev-parse", "--verify", "HEAD"],
@@ -102,6 +113,31 @@ def bootstrap_repo_path(destination: Path) -> None:
         run(["git", "add", "."], cwd=destination)
         run(["git", "commit", "-m", "Bootstrap repo from repo-os template"], cwd=destination)
 
+def install_base_into_existing_repo(repo_path: str) -> None:
+    destination = Path(repo_path).expanduser().resolve()
+    if not destination.exists():
+        fail(f"Repo path does not exist {destination}")
+    if not (destination / ".git").exists():
+        fail(f"Target is not a git repo {destination}")
+
+    for relative in BASE_COPY_PATHS:
+        src = TEMPLATES / "base" / relative
+        dest = destination / relative
+        if src.is_dir():
+            copy_tree(src, dest)
+        else:
+            copy_file(src, dest)
+
+    ensure_executables(destination)
+    run(["git", "config", "core.hooksPath", ".githooks"], cwd=destination)
+
+    print("Installed base ACP layer into existing repo")
+    print(destination)
+    print("Review and customize these files next")
+    print("  agent/design/requirements.md")
+    print("  agent/design/architecture.md")
+    print("  agent/design/source-of-truth-files.md")
+
 def init_repo(stack: str, repo_name: str) -> None:
     destination = initialize_repo_files(stack, repo_name)
     print(destination)
@@ -111,9 +147,6 @@ def bootstrap_repo(repo_path: str) -> None:
     bootstrap_repo_path(destination)
     print("Bootstrapped repo")
     print(destination)
-    print("Next commands")
-    print("  ./scripts/acp/acp.sh status")
-    print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
 
 def init_and_bootstrap_repo(stack: str, repo_name: str) -> None:
     destination = initialize_repo_files(stack, repo_name)
@@ -122,34 +155,31 @@ def init_and_bootstrap_repo(stack: str, repo_name: str) -> None:
     print(destination)
     print("Next commands")
     print(f"  cd {destination}")
-    print("  ./scripts/acp/acp.sh status")
-    print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
+    print("  ./scripts/acp/acp.sh doctor")
+    print("  ./scripts/acp/acp.sh init")
+    print("  ./scripts/acp/acp.sh next")
 
 def delete_repo(repo_name: str, confirm_name: str | None, force: bool) -> None:
     destination = (DESKTOP / repo_name).resolve()
 
     if destination == ROOT.resolve():
         fail("Refusing to delete repo-os itself")
-
     if not destination.exists():
         fail(f"Repo does not exist {destination}")
-
     if destination.parent != DESKTOP.resolve():
         fail("Refusing to delete paths outside Desktop")
 
     is_git_repo = (destination / ".git").exists()
     if not is_git_repo and not force:
-        fail("Target is not a git repo. Use --force if you really want to delete it")
+        fail("Target is not a git repo. Use --force if intended")
 
     if confirm_name != repo_name:
         print("Delete target")
         print(destination)
         print()
-        print("Re-run with the exact repo name as confirmation")
+        print("Re-run with exact confirmation")
         print(f"python3 cli/repo_os.py delete {repo_name} {repo_name}")
         if not is_git_repo:
-            print()
-            print("Because this is not a git repo, also add --force if intended")
             print(f"python3 cli/repo_os.py delete {repo_name} {repo_name} --force")
         sys.exit(1)
 
@@ -161,6 +191,7 @@ def doctor() -> None:
     print("repo-os doctor")
     print(f"templates base exists {(TEMPLATES / 'base').exists()}")
     print(f"templates swift-ios exists {(TEMPLATES / 'swift-ios').exists()}")
+    print(f"cli exists {(ROOT / 'cli' / 'repo_os.py').exists()}")
 
 def explain_command_policy() -> None:
     print("Command-first law")
@@ -169,7 +200,7 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|delete|doctor|explain-command-policy> ...")
+        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|install-base|delete|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
@@ -188,19 +219,22 @@ def main() -> None:
             fail("Usage repo_os.py init-and-bootstrap <stack> <repo-name>")
         init_and_bootstrap_repo(sys.argv[2], sys.argv[3])
 
+    elif command == "install-base":
+        if len(sys.argv) != 3:
+            fail("Usage repo_os.py install-base <repo-path>")
+        install_base_into_existing_repo(sys.argv[2])
+
     elif command == "delete":
         if len(sys.argv) not in {3, 4, 5}:
             fail("Usage repo_os.py delete <repo-name> [confirm-name] [--force]")
         repo_name = sys.argv[2]
         confirm_name = None
         force = False
-
         for arg in sys.argv[3:]:
             if arg == "--force":
                 force = True
             else:
                 confirm_name = arg
-
         delete_repo(repo_name, confirm_name, force)
 
     elif command == "doctor":

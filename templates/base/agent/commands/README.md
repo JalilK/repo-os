@@ -2,6 +2,7 @@
 
 ## Local ACP entrypoint
 
+- `./scripts/acp/acp.sh doctor`
 - `./scripts/acp/acp.sh init`
 - `./scripts/acp/acp.sh start <feature-name> [milestone] [task]`
 - `./scripts/acp/acp.sh status`
@@ -25,6 +26,7 @@
 
 @acp.init
 
+- validate ACP structure
 - load indexed repo context for a fresh session
 - show current progress state
 
@@ -48,3 +50,4 @@
 - progress changes should use ACP progress commands instead of manual YAML edits when possible
 - `acp start` should update progress state automatically
 - `acp context export` should be used when an LLM needs a current context pack
+- `acp doctor` should pass before fresh-session implementation work

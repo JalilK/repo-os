@@ -23,7 +23,11 @@ show_last_commit() {
 }
 
 case "$COMMAND" in
+  doctor)
+    python3 scripts/acp/doctor.py
+    ;;
   init)
+    python3 scripts/acp/doctor.py
     python3 scripts/acp/context_tools.py init
     ;;
   start)
@@ -108,6 +112,7 @@ case "$COMMAND" in
     ;;
   help|*)
     echo "Commands"
+    echo "acp doctor"
     echo "acp init"
     echo "acp start <feature-name> [milestone] [task]"
     echo "acp status"

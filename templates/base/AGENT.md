@@ -27,8 +27,13 @@ Use raw shell only for one-off operations, deep debugging, or bootstrap steps be
 
 At the start of a fresh session, use these commands first
 
+- `./scripts/acp/acp.sh doctor`
 - `./scripts/acp/acp.sh init`
 - `./scripts/acp/acp.sh next`
 - `./scripts/acp/acp.sh context export init`
 
 Do not begin implementation before recovering current repo context.
+
+## Existing repo migration law
+
+When applying this ACP system to an existing repo, use the repo-os install command instead of manually copying files.
