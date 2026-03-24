@@ -16,3 +16,5 @@
 - .github/workflows/pr-body.yml
 - scripts/verify.sh
 - scripts/acp/acp.sh
+- scripts/acp/update_progress.py
+- scripts/acp/context_tools.py

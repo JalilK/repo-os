@@ -12,6 +12,15 @@ Deep lane runs on demand and on schedule for slower system validation.
 
 Use ACP and verification commands instead of ad hoc shell for recurring repo workflows.
 
+## Fresh session recovery
+
+Use these commands for a fresh session
+
+- `./scripts/acp/acp.sh init`
+- `./scripts/acp/acp.sh next`
+- `./scripts/acp/acp.sh context show init`
+- `./scripts/acp/acp.sh context export init`
+
 ## Fast lane
 
 - lint
@@ -33,3 +42,4 @@ For every user-visible change, the PR must document manual verification.
 - `./scripts/acp/acp.sh verify`
 - `./scripts/acp/acp.sh pr body`
 - `./scripts/acp/acp.sh pr create`
+- `./scripts/acp/acp.sh context export init`

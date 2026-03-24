@@ -2,8 +2,12 @@
 
 ## Local ACP entrypoint
 
+- `./scripts/acp/acp.sh init`
 - `./scripts/acp/acp.sh start <feature-name> [milestone] [task]`
 - `./scripts/acp/acp.sh status`
+- `./scripts/acp/acp.sh next`
+- `./scripts/acp/acp.sh context show [command]`
+- `./scripts/acp/acp.sh context export [command]`
 - `./scripts/acp/acp.sh verify`
 - `./scripts/acp/acp.sh pr body`
 - `./scripts/acp/acp.sh pr create`
@@ -18,6 +22,11 @@
 - `./scripts/acp/acp.sh command suggest "<task description>"`
 
 ## Command meanings
+
+@acp.init
+
+- load indexed repo context for a fresh session
+- show current progress state
 
 @acp.status
 
@@ -38,3 +47,4 @@
 - recurring repo workflows should become ACP commands
 - progress changes should use ACP progress commands instead of manual YAML edits when possible
 - `acp start` should update progress state automatically
+- `acp context export` should be used when an LLM needs a current context pack

@@ -23,6 +23,9 @@ show_last_commit() {
 }
 
 case "$COMMAND" in
+  init)
+    python3 scripts/acp/context_tools.py init
+    ;;
   start)
     FEATURE="${2:-feature}"
     MILESTONE="${3:-Feature Work}"
@@ -44,6 +47,21 @@ case "$COMMAND" in
     echo
     echo "Progress"
     python3 scripts/acp/update_progress.py show
+    ;;
+  next)
+    python3 scripts/acp/context_tools.py next
+    ;;
+  context)
+    SUB="${2:-show}"
+    TARGET="${3:-init}"
+    if [ "$SUB" = "show" ]; then
+      python3 scripts/acp/context_tools.py show "$TARGET"
+    elif [ "$SUB" = "export" ]; then
+      python3 scripts/acp/context_tools.py export "$TARGET"
+    else
+      echo "Unknown context subcommand $SUB"
+      exit 1
+    fi
     ;;
   verify)
     ./scripts/verify.sh verify
@@ -90,8 +108,12 @@ case "$COMMAND" in
     ;;
   help|*)
     echo "Commands"
+    echo "acp init"
     echo "acp start <feature-name> [milestone] [task]"
     echo "acp status"
+    echo "acp next"
+    echo "acp context show [command]"
+    echo "acp context export [command]"
     echo "acp verify"
     echo "acp pr body"
     echo "acp pr create"

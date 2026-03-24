@@ -16,3 +16,5 @@
 - `acp pr create` must run local verification before opening a PR
 - PR body must be generated from ACP state, not written ad hoc
 - If a recurring repo workflow has no ACP command yet, add one
+- Fresh sessions should use `acp init` and `acp context export` before implementation work
+- LLM work should prefer ACP context export over ad hoc file guessing

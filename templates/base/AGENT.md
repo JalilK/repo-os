@@ -22,3 +22,13 @@ Before emitting terminal code, first look for an ACP command that covers the tas
 If the task is a recurring repo workflow and no ACP command exists yet, create or extend the ACP command surface instead of repeating raw shell.
 
 Use raw shell only for one-off operations, deep debugging, or bootstrap steps below the ACP abstraction layer.
+
+## Fresh session law
+
+At the start of a fresh session, use these commands first
+
+- `./scripts/acp/acp.sh init`
+- `./scripts/acp/acp.sh next`
+- `./scripts/acp/acp.sh context export init`
+
+Do not begin implementation before recovering current repo context.
