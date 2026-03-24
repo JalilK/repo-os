@@ -1,0 +1,77 @@
+indexed_files:
+  - path: AGENT.md
+    weight: 1.0
+    kind: repo-law
+    description: Repo-wide agent operating rules
+    rationale: Highest priority rule source
+    applies:
+      - init
+      - proceed
+      - validate
+
+  - path: agent/design/requirements.md
+    weight: 1.0
+    kind: requirements
+    description: Project requirements
+    rationale: Hard product and workflow constraints
+    applies:
+      - init
+      - proceed
+      - validate
+
+  - path: agent/design/architecture.md
+    weight: 0.9
+    kind: architecture
+    description: System architecture rules
+    rationale: Prevent architectural drift
+    applies:
+      - init
+      - proceed
+      - validate
+
+  - path: agent/design/verification-strategy.md
+    weight: 1.0
+    kind: verification
+    description: Verification source of truth
+    rationale: Defines proof of completion
+    applies:
+      - proceed
+      - validate
+
+  - path: agent/design/repo-rules.md
+    weight: 1.0
+    kind: repo-rules
+    description: Repo workflow and merge law
+    rationale: Controls how code moves
+    applies:
+      - proceed
+      - validate
+
+  - path: agent/design/source-of-truth-files.md
+    weight: 0.95
+    kind: truth-index
+    description: Governing files list
+    rationale: Tells the agent what governs reality
+    applies:
+      - init
+      - proceed
+      - validate
+
+  - path: agent/design/llm-terminal-execution-rules.md
+    weight: 1.0
+    kind: execution-law
+    description: Command-first terminal execution rules
+    rationale: Prevents drift into ad hoc shell
+    applies:
+      - init
+      - proceed
+      - validate
+
+  - path: agent/patterns/command-first-execution.md
+    weight: 0.95
+    kind: execution-pattern
+    description: Rule for deciding when to create or extend ACP commands
+    rationale: Moves repeated workflows into stable commands
+    applies:
+      - proceed
+      - validate

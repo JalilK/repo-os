@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Running ACP pre-push verification"
+./scripts/verify.sh verify

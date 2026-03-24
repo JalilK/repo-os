@@ -1,0 +1,53 @@
+name: APPNAME
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "17.0"
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    SWIFT_VERSION: 5.10
+
+targets:
+  APPNAME:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: App
+      - path: Features
+      - path: Core
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: BUNDLE_ID
+        PRODUCT_NAME: APPNAME
+        PRODUCT_MODULE_NAME: APPNAME
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: false
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: 1
+    scheme:
+      testTargets:
+        - APPNAMETests
+
+  APPNAMETests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    hostApplication: APPNAME
+    sources:
+      - path: Tests/APPNAMETests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: BUNDLE_IDTests
+        PRODUCT_NAME: APPNAMETests
+        PRODUCT_MODULE_NAME: APPNAMETests
+        GENERATE_INFOPLIST_FILE: true
+        CODE_SIGN_STYLE: Automatic
+    dependencies:
+      - target: APPNAME

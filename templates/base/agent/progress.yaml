@@ -1,0 +1,22 @@
+current_milestone: "Milestone 1"
+current_task: "Bootstrap repo operating system"
+milestone_status:
+  milestone_1_bootstrap: in_progress
+task_status:
+  milestone_1_task_1_bootstrap_repo: in_progress
+started_at: null
+completed_at: null
+recent_work:
+  - "Repo initialized from repo-os template"
+next_steps:
+  - "Fill in requirements"
+  - "Fill in architecture"
+  - "Configure stack-specific files"
+blockers: []
+documentation_counts:
+  design_files: 6
+  pattern_files: 2
+  milestone_files: 0
+  task_files: 0
+planning_progress: 0.10
+implementation_progress: 0.10
