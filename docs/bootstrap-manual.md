@@ -11,6 +11,7 @@ Initialize a new repository with ACP memory, repo enforcement, CI, PR controls, 
 ## Command
 
 `python3 cli/repo_os.py init swift-ios <repo-name>`
+`python3 cli/repo_os.py init-and-bootstrap swift-ios <repo-name>`
 
 ## What gets created
 

@@ -16,6 +16,7 @@ Every generated repo should include
 ## Primary commands
 
 - `python3 cli/repo_os.py init swift-ios <repo-name>`
+- `python3 cli/repo_os.py init-and-bootstrap swift-ios <repo-name>`
 - `python3 cli/repo_os.py doctor`
 - `python3 cli/repo_os.py explain-command-policy`
 

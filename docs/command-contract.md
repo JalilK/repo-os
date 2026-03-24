@@ -3,6 +3,7 @@
 ## repo-os commands
 
 - `repo-os init <stack> <repo-name>`
+- `repo-os init-and-bootstrap <stack> <repo-name>`
 - `repo-os doctor`
 - `repo-os explain-command-policy`
 

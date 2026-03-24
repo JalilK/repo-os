@@ -41,7 +41,7 @@ def copy_template(src: Path, dest: Path) -> None:
         fail(f"Template not found: {src}")
     shutil.copytree(src, dest, dirs_exist_ok=True)
 
-def init_repo(stack: str, repo_name: str) -> None:
+def initialize_repo_files(stack: str, repo_name: str) -> Path:
     if stack != "swift-ios":
         fail("Supported stacks: swift-ios")
 
@@ -69,10 +69,9 @@ def init_repo(stack: str, repo_name: str) -> None:
         if target.exists():
             target.chmod(0o755)
 
-    print(destination)
+    return destination
 
-def bootstrap_repo(repo_path: str) -> None:
-    destination = Path(repo_path).expanduser().resolve()
+def bootstrap_repo_path(destination: Path) -> None:
     if not destination.exists():
         fail(f"Repo path does not exist: {destination}")
 
@@ -91,20 +90,39 @@ def bootstrap_repo(repo_path: str) -> None:
         if target.exists():
             target.chmod(0o755)
 
-    if not subprocess.run(
+    has_commit = subprocess.run(
         ["git", "rev-parse", "--verify", "HEAD"],
         cwd=destination,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
-    ).returncode == 0:
+    ).returncode == 0
+
+    if not has_commit:
         run(["git", "add", "."], cwd=destination)
         run(["git", "commit", "-m", "Bootstrap repo from repo-os template"], cwd=destination)
 
+def init_repo(stack: str, repo_name: str) -> None:
+    destination = initialize_repo_files(stack, repo_name)
+    print(destination)
+
+def bootstrap_repo(repo_path: str) -> None:
+    destination = Path(repo_path).expanduser().resolve()
+    bootstrap_repo_path(destination)
     print("Bootstrapped repo:")
     print(destination)
     print("Next commands:")
     print("  ./scripts/acp/acp.sh status")
-    print("  ./scripts/acp/acp.sh command suggest \"describe your next task\"")
+    print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
+
+def init_and_bootstrap_repo(stack: str, repo_name: str) -> None:
+    destination = initialize_repo_files(stack, repo_name)
+    bootstrap_repo_path(destination)
+    print("Initialized and bootstrapped repo:")
+    print(destination)
+    print("Next commands:")
+    print("  cd " + str(destination))
+    print("  ./scripts/acp/acp.sh status")
+    print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
 
 def doctor() -> None:
     print("repo-os doctor")
@@ -118,7 +136,7 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage: repo_os.py <init|bootstrap|doctor|explain-command-policy> ...")
+        fail("Usage: repo_os.py <init|bootstrap|init-and-bootstrap|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
@@ -130,6 +148,10 @@ def main() -> None:
         if len(sys.argv) != 3:
             fail("Usage: repo_os.py bootstrap <repo-path>")
         bootstrap_repo(sys.argv[2])
+    elif command == "init-and-bootstrap":
+        if len(sys.argv) != 4:
+            fail("Usage: repo_os.py init-and-bootstrap <stack> <repo-name>")
+        init_and_bootstrap_repo(sys.argv[2], sys.argv[3])
     elif command == "doctor":
         doctor()
     elif command == "explain-command-policy":
