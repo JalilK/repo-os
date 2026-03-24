@@ -7,6 +7,13 @@
 - `./scripts/acp/acp.sh verify`
 - `./scripts/acp/acp.sh pr body`
 - `./scripts/acp/acp.sh pr create`
+- `./scripts/acp/acp.sh progress show`
+- `./scripts/acp/acp.sh progress set-milestone <value>`
+- `./scripts/acp/acp.sh progress set-task <value>`
+- `./scripts/acp/acp.sh progress add-recent-work <value>`
+- `./scripts/acp/acp.sh progress add-next-step <value>`
+- `./scripts/acp/acp.sh progress add-blocker <value>`
+- `./scripts/acp/acp.sh progress clear-blockers`
 - `./scripts/acp/acp.sh complete`
 - `./scripts/acp/acp.sh command suggest "<task description>"`
 
@@ -29,3 +36,4 @@
 - pre-push hook runs verification
 - `acp pr create` runs verification before PR creation
 - recurring repo workflows should become ACP commands
+- progress changes should use ACP progress commands instead of manual YAML edits when possible

@@ -39,7 +39,7 @@ case "$COMMAND" in
     show_last_commit
     echo
     echo "Progress"
-    cat agent/progress.yaml
+    python3 scripts/acp/update_progress.py show
     ;;
   verify)
     ./scripts/verify.sh verify
@@ -57,6 +57,11 @@ case "$COMMAND" in
       echo "Unknown pr subcommand $SUB"
       exit 1
     fi
+    ;;
+  progress)
+    SUB="${2:-show}"
+    shift 2 || true
+    python3 scripts/acp/update_progress.py "$SUB" "$@"
     ;;
   complete)
     ./scripts/verify.sh verify
@@ -85,6 +90,13 @@ case "$COMMAND" in
     echo "acp verify"
     echo "acp pr body"
     echo "acp pr create"
+    echo "acp progress show"
+    echo "acp progress set-milestone <value>"
+    echo "acp progress set-task <value>"
+    echo "acp progress add-recent-work <value>"
+    echo "acp progress add-next-step <value>"
+    echo "acp progress add-blocker <value>"
+    echo "acp progress clear-blockers"
     echo "acp complete"
     echo 'acp command suggest "<task description>"'
     ;;
