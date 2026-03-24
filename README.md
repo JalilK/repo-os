@@ -32,3 +32,5 @@ Generated repos receive
 - CODEOWNERS
 - verification scripts
 - command-first LLM rules
+
+- `python3 cli/repo_os.py delete <repo-name> <repo-name>`

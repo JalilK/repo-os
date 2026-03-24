@@ -6,6 +6,7 @@
 - `repo-os init-and-bootstrap <stack> <repo-name>`
 - `repo-os doctor`
 - `repo-os explain-command-policy`
+- `repo-os delete <repo-name> <repo-name>`
 
 ## generated repo commands
 

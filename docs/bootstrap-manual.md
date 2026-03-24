@@ -24,3 +24,7 @@ Initialize a new repository with ACP memory, repo enforcement, CI, PR controls, 
 ## Rule
 
 Generated repos must always include command-first execution rules for LLM use.
+
+## Delete a generated repo
+
+`python3 cli/repo_os.py delete <repo-name> <repo-name>`

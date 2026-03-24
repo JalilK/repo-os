@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / "templates"
+DESKTOP = Path.home() / "Desktop"
 
 def fail(message: str) -> None:
     print(message)
@@ -43,11 +44,11 @@ def copy_template(src: Path, dest: Path) -> None:
 
 def initialize_repo_files(stack: str, repo_name: str) -> Path:
     if stack != "swift-ios":
-        fail("Supported stacks: swift-ios")
+        fail("Supported stacks are swift-ios")
 
-    destination = Path.home() / "Desktop" / repo_name
+    destination = DESKTOP / repo_name
     if destination.exists():
-        fail(f"Destination already exists: {destination}")
+        fail(f"Destination already exists {destination}")
 
     destination.mkdir(parents=True)
 
@@ -73,7 +74,7 @@ def initialize_repo_files(stack: str, repo_name: str) -> Path:
 
 def bootstrap_repo_path(destination: Path) -> None:
     if not destination.exists():
-        fail(f"Repo path does not exist: {destination}")
+        fail(f"Repo path does not exist {destination}")
 
     if not (destination / ".git").exists():
         run(["git", "init"], cwd=destination)
@@ -108,26 +109,58 @@ def init_repo(stack: str, repo_name: str) -> None:
 def bootstrap_repo(repo_path: str) -> None:
     destination = Path(repo_path).expanduser().resolve()
     bootstrap_repo_path(destination)
-    print("Bootstrapped repo:")
+    print("Bootstrapped repo")
     print(destination)
-    print("Next commands:")
+    print("Next commands")
     print("  ./scripts/acp/acp.sh status")
     print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
 
 def init_and_bootstrap_repo(stack: str, repo_name: str) -> None:
     destination = initialize_repo_files(stack, repo_name)
     bootstrap_repo_path(destination)
-    print("Initialized and bootstrapped repo:")
+    print("Initialized and bootstrapped repo")
     print(destination)
-    print("Next commands:")
-    print("  cd " + str(destination))
+    print("Next commands")
+    print(f"  cd {destination}")
     print("  ./scripts/acp/acp.sh status")
     print('  ./scripts/acp/acp.sh command suggest "describe your next task"')
 
+def delete_repo(repo_name: str, confirm_name: str | None, force: bool) -> None:
+    destination = (DESKTOP / repo_name).resolve()
+
+    if destination == ROOT.resolve():
+        fail("Refusing to delete repo-os itself")
+
+    if not destination.exists():
+        fail(f"Repo does not exist {destination}")
+
+    if destination.parent != DESKTOP.resolve():
+        fail("Refusing to delete paths outside Desktop")
+
+    is_git_repo = (destination / ".git").exists()
+    if not is_git_repo and not force:
+        fail("Target is not a git repo. Use --force if you really want to delete it")
+
+    if confirm_name != repo_name:
+        print("Delete target")
+        print(destination)
+        print()
+        print("Re-run with the exact repo name as confirmation")
+        print(f"python3 cli/repo_os.py delete {repo_name} {repo_name}")
+        if not is_git_repo:
+            print()
+            print("Because this is not a git repo, also add --force if intended")
+            print(f"python3 cli/repo_os.py delete {repo_name} {repo_name} --force")
+        sys.exit(1)
+
+    shutil.rmtree(destination)
+    print("Deleted repo")
+    print(destination)
+
 def doctor() -> None:
     print("repo-os doctor")
-    print(f"templates base exists: {(TEMPLATES / 'base').exists()}")
-    print(f"templates swift-ios exists: {(TEMPLATES / 'swift-ios').exists()}")
+    print(f"templates base exists {(TEMPLATES / 'base').exists()}")
+    print(f"templates swift-ios exists {(TEMPLATES / 'swift-ios').exists()}")
 
 def explain_command_policy() -> None:
     print("Command-first law")
@@ -136,26 +169,46 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage: repo_os.py <init|bootstrap|init-and-bootstrap|doctor|explain-command-policy> ...")
+        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|delete|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
     if command == "init":
         if len(sys.argv) != 4:
-            fail("Usage: repo_os.py init <stack> <repo-name>")
+            fail("Usage repo_os.py init <stack> <repo-name>")
         init_repo(sys.argv[2], sys.argv[3])
+
     elif command == "bootstrap":
         if len(sys.argv) != 3:
-            fail("Usage: repo_os.py bootstrap <repo-path>")
+            fail("Usage repo_os.py bootstrap <repo-path>")
         bootstrap_repo(sys.argv[2])
+
     elif command == "init-and-bootstrap":
         if len(sys.argv) != 4:
-            fail("Usage: repo_os.py init-and-bootstrap <stack> <repo-name>")
+            fail("Usage repo_os.py init-and-bootstrap <stack> <repo-name>")
         init_and_bootstrap_repo(sys.argv[2], sys.argv[3])
+
+    elif command == "delete":
+        if len(sys.argv) not in {3, 4, 5}:
+            fail("Usage repo_os.py delete <repo-name> [confirm-name] [--force]")
+        repo_name = sys.argv[2]
+        confirm_name = None
+        force = False
+
+        for arg in sys.argv[3:]:
+            if arg == "--force":
+                force = True
+            else:
+                confirm_name = arg
+
+        delete_repo(repo_name, confirm_name, force)
+
     elif command == "doctor":
         doctor()
+
     elif command == "explain-command-policy":
         explain_command_policy()
+
     else:
         fail("Unknown command")
 
