@@ -14,6 +14,14 @@ require_clean_worktree() {
   fi
 }
 
+show_last_commit() {
+  if git rev-parse --verify HEAD >/dev/null 2>&1; then
+    git log -1 --oneline
+  else
+    echo "No commits yet"
+  fi
+}
+
 case "$COMMAND" in
   start)
     FEATURE="${2:-feature}"
@@ -28,7 +36,7 @@ case "$COMMAND" in
     git branch --show-current
     echo
     echo "Last commit"
-    git log -1 --oneline
+    show_last_commit
     echo
     echo "Progress"
     cat agent/progress.yaml
