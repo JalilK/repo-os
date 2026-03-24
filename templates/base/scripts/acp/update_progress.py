@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -13,47 +14,76 @@ if not PROGRESS.exists():
 
 text = PROGRESS.read_text()
 
-def replace_scalar(key: str, value: str) -> str:
-    import re
-    pattern = rf'^{key}:\s*.*$'
+def replace_scalar(content: str, key: str, value: str) -> str:
+    pattern = rf'^{re.escape(key)}:\s*.*$'
     replacement = f'{key}: "{value}"'
-    if re.search(pattern, text, flags=re.MULTILINE):
-        return re.sub(pattern, replacement, text, flags=re.MULTILINE)
-    return text + f'\n{replacement}\n'
+    if re.search(pattern, content, flags=re.MULTILINE):
+        return re.sub(pattern, replacement, content, flags=re.MULTILINE)
+    return content.rstrip() + f'\n{replacement}\n'
 
-def add_list_item(section: str, value: str) -> str:
-    marker = f"{section}:\n"
-    if marker not in text:
-        return text + f"\n{section}:\n  - \"{value}\"\n"
-    idx = text.index(marker) + len(marker)
-    return text[:idx] + f'  - "{value}"\n' + text[idx:]
+def replace_list(content: str, key: str, items: list[str]) -> str:
+    pattern = rf'^{re.escape(key)}:\n(?:  - .*?\n)*'
+    replacement = key + ":\n" + "".join(f'  - "{item}"\n' for item in items)
+    if re.search(pattern, content, flags=re.MULTILINE):
+        return re.sub(pattern, replacement, content, flags=re.MULTILINE)
+    return content.rstrip() + "\n" + replacement
 
-def clear_blockers() -> str:
-    import re
-    pattern = r"^blockers:.*?$"
-    if re.search(pattern, text, flags=re.MULTILINE):
-        return re.sub(pattern, "blockers: []", text, flags=re.MULTILINE)
-    return text + "\nblockers: []\n"
+def add_list_item(content: str, key: str, value: str) -> str:
+    pattern = rf'^{re.escape(key)}:\n((?:  - .*?\n)*)'
+    match = re.search(pattern, content, flags=re.MULTILINE)
+    if match:
+        existing = match.group(1)
+        replacement = f"{key}:\n{existing}  - \"{value}\"\n"
+        return re.sub(pattern, replacement, content, flags=re.MULTILINE)
+    return content.rstrip() + f'\n{key}:\n  - "{value}"\n'
+
+def clear_list(content: str, key: str) -> str:
+    pattern = rf'^{re.escape(key)}:\n(?:  - .*?\n)*'
+    replacement = f"{key}: []\n"
+    if re.search(pattern, content, flags=re.MULTILINE):
+        return re.sub(pattern, replacement, content, flags=re.MULTILINE)
+    return content.rstrip() + f'\n{key}: []\n'
 
 cmd = sys.argv[1] if len(sys.argv) > 1 else ""
-arg = sys.argv[2] if len(sys.argv) > 2 else ""
 
 if cmd == "show":
     print(text)
     sys.exit(0)
 
-if cmd == "set-milestone":
-    text = replace_scalar("current_milestone", arg)
+elif cmd == "set-milestone":
+    value = sys.argv[2]
+    text = replace_scalar(text, "current_milestone", value)
+
 elif cmd == "set-task":
-    text = replace_scalar("current_task", arg)
+    value = sys.argv[2]
+    text = replace_scalar(text, "current_task", value)
+
 elif cmd == "add-recent-work":
-    text = add_list_item("recent_work", arg)
+    value = sys.argv[2]
+    text = add_list_item(text, "recent_work", value)
+
 elif cmd == "add-next-step":
-    text = add_list_item("next_steps", arg)
+    value = sys.argv[2]
+    text = add_list_item(text, "next_steps", value)
+
 elif cmd == "add-blocker":
-    text = add_list_item("blockers", arg)
+    value = sys.argv[2]
+    text = add_list_item(text, "blockers", value)
+
 elif cmd == "clear-blockers":
-    text = clear_blockers()
+    text = clear_list(text, "blockers")
+
+elif cmd == "start-feature":
+    feature_name = sys.argv[2]
+    milestone = sys.argv[3] if len(sys.argv) > 3 else "Feature Work"
+    task = sys.argv[4] if len(sys.argv) > 4 else f"Implement {feature_name}"
+
+    text = replace_scalar(text, "current_milestone", milestone)
+    text = replace_scalar(text, "current_task", task)
+    text = clear_list(text, "blockers")
+    text = replace_list(text, "recent_work", [f"Started feature branch for {feature_name}"])
+    text = replace_list(text, "next_steps", [f"Implement {feature_name}", "Run local verify", "Prepare PR from ACP state"])
+
 else:
     print("Usage")
     print("  update_progress.py show")
@@ -63,6 +93,7 @@ else:
     print("  update_progress.py add-next-step <value>")
     print("  update_progress.py add-blocker <value>")
     print("  update_progress.py clear-blockers")
+    print("  update_progress.py start-feature <feature-name> [milestone] [task]")
     sys.exit(1)
 
 PROGRESS.write_text(text)

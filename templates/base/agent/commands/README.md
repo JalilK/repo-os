@@ -2,7 +2,7 @@
 
 ## Local ACP entrypoint
 
-- `./scripts/acp/acp.sh start <feature-name>`
+- `./scripts/acp/acp.sh start <feature-name> [milestone] [task]`
 - `./scripts/acp/acp.sh status`
 - `./scripts/acp/acp.sh verify`
 - `./scripts/acp/acp.sh pr body`
@@ -37,3 +37,4 @@
 - `acp pr create` runs verification before PR creation
 - recurring repo workflows should become ACP commands
 - progress changes should use ACP progress commands instead of manual YAML edits when possible
+- `acp start` should update progress state automatically

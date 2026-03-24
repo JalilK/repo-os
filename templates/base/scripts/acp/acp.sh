@@ -25,10 +25,14 @@ show_last_commit() {
 case "$COMMAND" in
   start)
     FEATURE="${2:-feature}"
+    MILESTONE="${3:-Feature Work}"
+    TASK="${4:-Implement $FEATURE}"
     BRANCH="feat/${FEATURE// /-}"
     require_clean_worktree
     git checkout -b "$BRANCH"
+    python3 scripts/acp/update_progress.py start-feature "$FEATURE" "$MILESTONE" "$TASK"
     echo "Started feature branch $BRANCH"
+    echo "Updated ACP progress for feature $FEATURE"
     ;;
   status)
     echo "=== ACP STATUS ==="
@@ -66,6 +70,7 @@ case "$COMMAND" in
   complete)
     ./scripts/verify.sh verify
     echo "Verification passed"
+    echo "Open PR or merge only if PR checks are green and manual verification is documented"
     ;;
   command)
     SUB="${2:-}"
@@ -85,7 +90,7 @@ case "$COMMAND" in
     ;;
   help|*)
     echo "Commands"
-    echo "acp start <feature-name>"
+    echo "acp start <feature-name> [milestone] [task]"
     echo "acp status"
     echo "acp verify"
     echo "acp pr body"
