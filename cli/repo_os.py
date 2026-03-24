@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -11,6 +12,9 @@ TEMPLATES = ROOT / "templates"
 def fail(message: str) -> None:
     print(message)
     sys.exit(1)
+
+def run(cmd: list[str], cwd: Path | None = None) -> None:
+    subprocess.run(cmd, cwd=cwd, check=True)
 
 def replace_tokens(path: Path, repo_name: str) -> None:
     if path.is_dir():
@@ -67,6 +71,41 @@ def init_repo(stack: str, repo_name: str) -> None:
 
     print(destination)
 
+def bootstrap_repo(repo_path: str) -> None:
+    destination = Path(repo_path).expanduser().resolve()
+    if not destination.exists():
+        fail(f"Repo path does not exist: {destination}")
+
+    if not (destination / ".git").exists():
+        run(["git", "init"], cwd=destination)
+
+    run(["git", "config", "core.hooksPath", ".githooks"], cwd=destination)
+
+    for relative in [
+        ".githooks/pre-push",
+        "scripts/acp/acp.sh",
+        "scripts/acp/generate_pr_body.py",
+        "scripts/check_pr_body.py",
+    ]:
+        target = destination / relative
+        if target.exists():
+            target.chmod(0o755)
+
+    if not subprocess.run(
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=destination,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ).returncode == 0:
+        run(["git", "add", "."], cwd=destination)
+        run(["git", "commit", "-m", "Bootstrap repo from repo-os template"], cwd=destination)
+
+    print("Bootstrapped repo:")
+    print(destination)
+    print("Next commands:")
+    print("  ./scripts/acp/acp.sh status")
+    print("  ./scripts/acp/acp.sh command suggest \"describe your next task\"")
+
 def doctor() -> None:
     print("repo-os doctor")
     print(f"templates base exists: {(TEMPLATES / 'base').exists()}")
@@ -79,7 +118,7 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage: repo_os.py <init|doctor|explain-command-policy> ...")
+        fail("Usage: repo_os.py <init|bootstrap|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
@@ -87,6 +126,10 @@ def main() -> None:
         if len(sys.argv) != 4:
             fail("Usage: repo_os.py init <stack> <repo-name>")
         init_repo(sys.argv[2], sys.argv[3])
+    elif command == "bootstrap":
+        if len(sys.argv) != 3:
+            fail("Usage: repo_os.py bootstrap <repo-path>")
+        bootstrap_repo(sys.argv[2])
     elif command == "doctor":
         doctor()
     elif command == "explain-command-policy":
