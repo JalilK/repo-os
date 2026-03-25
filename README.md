@@ -18,6 +18,7 @@ Every generated repo should include
 - `python3 cli/repo_os.py init swift-ios <repo-name>`
 - `python3 cli/repo_os.py init-and-bootstrap swift-ios <repo-name>`
 - `python3 cli/repo_os.py install-base <repo-path>`
+- `python3 cli/repo_os.py update-base <repo-path>`
 - `python3 cli/repo_os.py doctor`
 - `python3 cli/repo_os.py explain-command-policy`
 - `python3 cli/repo_os.py delete <repo-name> <repo-name>`

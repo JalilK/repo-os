@@ -5,6 +5,7 @@
 - `repo-os init <stack> <repo-name>`
 - `repo-os init-and-bootstrap <stack> <repo-name>`
 - `repo-os install-base <repo-path>`
+- `repo-os update-base <repo-path>`
 - `repo-os doctor`
 - `repo-os explain-command-policy`
 - `repo-os delete <repo-name> <repo-name>`
@@ -36,3 +37,4 @@
 
 If a recurring repo workflow can be represented as an ACP command, use or create the ACP command.
 If ACP is being applied to an existing repo, use `repo-os install-base`.
+If ACP is already installed and you need the latest base-layer updates, use `repo-os update-base`.
