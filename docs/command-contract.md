@@ -21,7 +21,15 @@
 - `acp verify`
 - `acp pr body`
 - `acp pr create`
-- `acp progress ...`
+- `acp progress show`
+- `acp progress set-milestone <value>`
+- `acp progress set-task <value>`
+- `acp progress add-recent-work <value>`
+- `acp progress add-next-step <value>`
+- `acp progress add-blocker <value>`
+- `acp progress clear-blockers`
+- `acp progress mark-complete <status-key>`
+- `acp progress mark-in-progress <status-key>`
 - `acp complete`
 
 ## command-first law

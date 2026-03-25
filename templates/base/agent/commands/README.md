@@ -19,6 +19,8 @@
 - `./scripts/acp/acp.sh progress add-next-step <value>`
 - `./scripts/acp/acp.sh progress add-blocker <value>`
 - `./scripts/acp/acp.sh progress clear-blockers`
+- `./scripts/acp/acp.sh progress mark-complete <status-key>`
+- `./scripts/acp/acp.sh progress mark-in-progress <status-key>`
 - `./scripts/acp/acp.sh complete`
 - `./scripts/acp/acp.sh command suggest "<task description>"`
 

@@ -78,7 +78,7 @@ case "$COMMAND" in
     elif [ "$SUB" = "create" ]; then
       ./scripts/verify.sh verify
       PR_BODY_FILE="$(python3 scripts/acp/generate_pr_body.py)"
-      gh pr create --fill --body-file "$PR_BODY_FILE"
+      gh pr create --base main --head "$(git branch --show-current)" --fill --body-file "$PR_BODY_FILE"
     else
       echo "Unknown pr subcommand $SUB"
       exit 1
@@ -129,6 +129,8 @@ case "$COMMAND" in
     echo "acp progress add-next-step <value>"
     echo "acp progress add-blocker <value>"
     echo "acp progress clear-blockers"
+    echo "acp progress mark-complete <status-key>"
+    echo "acp progress mark-in-progress <status-key>"
     echo "acp complete"
     echo 'acp command suggest "<task description>"'
     ;;
