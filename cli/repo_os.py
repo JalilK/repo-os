@@ -33,8 +33,15 @@ def fail(message: str) -> None:
     print(message)
     sys.exit(1)
 
-def run(cmd: list[str], cwd: Path | None = None) -> None:
-    subprocess.run(cmd, cwd=cwd, check=True)
+def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
+    result = subprocess.run(
+        cmd,
+        cwd=cwd,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE if capture else None,
+    )
+    return result.stdout.strip() if capture else ""
 
 def replace_tokens(path: Path, repo_name: str) -> None:
     if path.is_dir():
@@ -80,7 +87,6 @@ def initialize_repo_files(stack: str, repo_name: str) -> Path:
         fail(f"Destination already exists {destination}")
 
     destination.mkdir(parents=True)
-
     copy_tree(TEMPLATES / "base", destination)
     copy_tree(TEMPLATES / "swift-ios", destination)
 
@@ -137,6 +143,42 @@ def install_base_into_existing_repo(repo_path: str) -> None:
     print("  agent/design/requirements.md")
     print("  agent/design/architecture.md")
     print("  agent/design/source-of-truth-files.md")
+
+def update_base_in_existing_repo(repo_path: str) -> None:
+    destination = Path(repo_path).expanduser().resolve()
+    if not destination.exists():
+        fail(f"Repo path does not exist {destination}")
+    if not (destination / ".git").exists():
+        fail(f"Target is not a git repo {destination}")
+    if not (destination / "scripts" / "acp" / "acp.sh").exists():
+        fail("ACP base does not appear to be installed in target repo")
+
+    before = run(["git", "status", "--short"], cwd=destination, capture=True)
+
+    for relative in BASE_COPY_PATHS:
+        src = TEMPLATES / "base" / relative
+        dest = destination / relative
+        if src.is_dir():
+            copy_tree(src, dest)
+        else:
+            copy_file(src, dest)
+
+    ensure_executables(destination)
+    run(["git", "config", "core.hooksPath", ".githooks"], cwd=destination)
+
+    after = run(["git", "status", "--short"], cwd=destination, capture=True)
+
+    print("Updated ACP base layer in existing repo")
+    print(destination)
+    print()
+    print("Changed files")
+    if after:
+        print(after)
+    else:
+        print("No changes")
+    print()
+    print("Previous git status snapshot")
+    print(before if before else "Clean before update")
 
 def init_repo(stack: str, repo_name: str) -> None:
     destination = initialize_repo_files(stack, repo_name)
@@ -200,7 +242,7 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|install-base|delete|doctor|explain-command-policy> ...")
+        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|install-base|update-base|delete|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
@@ -223,6 +265,11 @@ def main() -> None:
         if len(sys.argv) != 3:
             fail("Usage repo_os.py install-base <repo-path>")
         install_base_into_existing_repo(sys.argv[2])
+
+    elif command == "update-base":
+        if len(sys.argv) != 3:
+            fail("Usage repo_os.py update-base <repo-path>")
+        update_base_in_existing_repo(sys.argv[2])
 
     elif command == "delete":
         if len(sys.argv) not in {3, 4, 5}:
