@@ -231,6 +231,7 @@ def install_base_into_existing_repo(repo_path: str) -> None:
     print(destination)
 
 
+
 def update_base_in_existing_repo(repo_path: str) -> None:
     destination = Path(repo_path).expanduser().resolve()
     if not destination.exists():
@@ -242,9 +243,31 @@ def update_base_in_existing_repo(repo_path: str) -> None:
 
     before = run(["git", "status", "--short"], cwd=destination, capture=True)
 
+    preserved: list[str] = []
+
     for relative in BASE_COPY_PATHS:
         src = TEMPLATES / "base" / relative
         dest = destination / relative
+
+        if relative == "agent" and (destination / "agent" / "overlay").exists():
+            overlay_backup = destination / "agent" / "overlay"
+            backup_root = destination / ".repo_os_overlay_backup"
+
+            if backup_root.exists():
+                shutil.rmtree(backup_root)
+            backup_root.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(overlay_backup, backup_root / "overlay", dirs_exist_ok=True)
+
+            copy_tree(src, dest)
+
+            if overlay_backup.exists():
+                shutil.rmtree(overlay_backup)
+            shutil.copytree(backup_root / "overlay", overlay_backup, dirs_exist_ok=True)
+            shutil.rmtree(backup_root)
+
+            preserved.append("agent/overlay")
+            continue
+
         if src.is_dir():
             copy_tree(src, dest)
         else:
@@ -258,12 +281,14 @@ def update_base_in_existing_repo(repo_path: str) -> None:
     print("Updated ACP base layer in existing repo")
     print(destination)
     print()
+    print("Preserved files")
+    print("\n".join(preserved) if preserved else "None")
+    print()
     print("Changed files")
     print(after if after else "No changes")
     print()
     print("Previous git status snapshot")
     print(before if before else "Clean before update")
-
 
 def update_stack_in_existing_repo(stack: str, repo_path: str, repo_name: str, force: bool = False) -> None:
     if stack not in STACK_COPY_PATHS:
