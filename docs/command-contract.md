@@ -3,7 +3,7 @@
 ## repo-os commands
 
 - `repo-os init <stack> <repo-name>`
-- `repo-os init-and-bootstrap <stack> <repo-name>`
+- `repo-os init <stack> <repo-name> --bootstrap`
 - `repo-os install-base <repo-path>`
 - `repo-os update-base <repo-path>`
 - `repo-os doctor`
@@ -33,8 +33,13 @@
 - `acp progress mark-in-progress <status-key>`
 - `acp complete`
 
-## command-first law
+## generated repo verification commands
 
-If a recurring repo workflow can be represented as an ACP command, use or create the ACP command.
-If ACP is being applied to an existing repo, use `repo-os install-base`.
-If ACP is already installed and you need the latest base-layer updates, use `repo-os update-base`.
+- `verify.sh lint`
+- `verify.sh build`
+- `verify.sh test`
+- `verify.sh verify`
+
+## canonical command law
+
+If two commands do the same job, document one canonical command and treat the other as compatibility only.

@@ -180,9 +180,19 @@ def update_base_in_existing_repo(repo_path: str) -> None:
     print("Previous git status snapshot")
     print(before if before else "Clean before update")
 
-def init_repo(stack: str, repo_name: str) -> None:
+def init_repo(stack: str, repo_name: str, bootstrap: bool = False) -> None:
     destination = initialize_repo_files(stack, repo_name)
-    print(destination)
+    if bootstrap:
+        bootstrap_repo_path(destination)
+        print("Initialized and bootstrapped repo")
+        print(destination)
+        print("Next commands")
+        print(f"  cd {destination}")
+        print("  ./scripts/acp/acp.sh doctor")
+        print("  ./scripts/acp/acp.sh init")
+        print("  ./scripts/acp/acp.sh next")
+    else:
+        print(destination)
 
 def bootstrap_repo(repo_path: str) -> None:
     destination = Path(repo_path).expanduser().resolve()
@@ -191,15 +201,7 @@ def bootstrap_repo(repo_path: str) -> None:
     print(destination)
 
 def init_and_bootstrap_repo(stack: str, repo_name: str) -> None:
-    destination = initialize_repo_files(stack, repo_name)
-    bootstrap_repo_path(destination)
-    print("Initialized and bootstrapped repo")
-    print(destination)
-    print("Next commands")
-    print(f"  cd {destination}")
-    print("  ./scripts/acp/acp.sh doctor")
-    print("  ./scripts/acp/acp.sh init")
-    print("  ./scripts/acp/acp.sh next")
+    init_repo(stack, repo_name, bootstrap=True)
 
 def delete_repo(repo_name: str, confirm_name: str | None, force: bool) -> None:
     destination = (DESKTOP / repo_name).resolve()
@@ -242,14 +244,17 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage repo_os.py <init|bootstrap|init-and-bootstrap|install-base|update-base|delete|doctor|explain-command-policy> ...")
+        fail("Usage repo_os.py <init|bootstrap|install-base|update-base|delete|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
     if command == "init":
-        if len(sys.argv) != 4:
-            fail("Usage repo_os.py init <stack> <repo-name>")
-        init_repo(sys.argv[2], sys.argv[3])
+        if len(sys.argv) not in {4, 5}:
+            fail("Usage repo_os.py init <stack> <repo-name> [--bootstrap]")
+        bootstrap = len(sys.argv) == 5 and sys.argv[4] == "--bootstrap"
+        if len(sys.argv) == 5 and sys.argv[4] != "--bootstrap":
+            fail("Usage repo_os.py init <stack> <repo-name> [--bootstrap]")
+        init_repo(sys.argv[2], sys.argv[3], bootstrap=bootstrap)
 
     elif command == "bootstrap":
         if len(sys.argv) != 3:
@@ -259,6 +264,8 @@ def main() -> None:
     elif command == "init-and-bootstrap":
         if len(sys.argv) != 4:
             fail("Usage repo_os.py init-and-bootstrap <stack> <repo-name>")
+        print("Deprecated")
+        print("Use repo_os.py init <stack> <repo-name> --bootstrap")
         init_and_bootstrap_repo(sys.argv[2], sys.argv[3])
 
     elif command == "install-base":
