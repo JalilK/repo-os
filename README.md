@@ -19,6 +19,7 @@ Every generated repo should include
 - `python3 cli/repo_os.py init swift-ios <repo-name> --bootstrap`
 - `python3 cli/repo_os.py install-base <repo-path>`
 - `python3 cli/repo_os.py update-base <repo-path>`
+- `python3 cli/repo_os.py update-stack swift-ios <repo-path> <repo-name>`
 - `python3 cli/repo_os.py doctor`
 - `python3 cli/repo_os.py explain-command-policy`
 - `python3 cli/repo_os.py delete <repo-name> <repo-name>`
@@ -59,7 +60,7 @@ Use one canonical command per job.
 
 - repo creation without bootstrap uses `init`
 - repo creation with bootstrap uses `init --bootstrap`
+- ACP-only updates use `update-base`
+- stack file updates that need token rendering use `update-stack`
 - full repo verification uses `acp verify`
 - layer verification uses `verify.sh lint`, `build`, `test`, and `verify`
-
-Compatibility aliases may exist, but they are not the documented surface.
