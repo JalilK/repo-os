@@ -81,8 +81,36 @@ def render_tokens_in_tree(root: Path, repo_name: str) -> None:
 
 def rename_paths(root: Path, repo_name: str) -> None:
     for path in sorted(root.rglob("*APPNAME*"), reverse=True):
-        new_name = path.name.replace("APPNAME", repo_name)
-        path.rename(path.with_name(new_name))
+        target = path.with_name(path.name.replace("APPNAME", repo_name))
+
+        if not target.exists():
+            path.rename(target)
+            continue
+
+        if path.is_dir() and target.is_dir():
+            for child in sorted(path.iterdir()):
+                child_target = target / child.name
+                if child_target.exists():
+                    if child.is_dir() and child_target.is_dir():
+                        shutil.copytree(child, child_target, dirs_exist_ok=True)
+                        shutil.rmtree(child)
+                    else:
+                        if child_target.is_dir():
+                            shutil.rmtree(child_target)
+                        else:
+                            child_target.unlink()
+                        shutil.move(str(child), str(child_target))
+                else:
+                    shutil.move(str(child), str(child_target))
+            path.rmdir()
+            continue
+
+        if target.is_dir():
+            shutil.rmtree(target)
+        else:
+            target.unlink()
+
+        path.rename(target)
 
 def copy_tree(src: Path, dest: Path) -> None:
     if not src.exists():
