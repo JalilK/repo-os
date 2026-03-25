@@ -88,9 +88,6 @@ case "$MODE" in
   verify)
     run_verify
     ;;
-  test-fast)
-    run_test
-    ;;
   *)
     echo "Unknown mode ${MODE}"
     exit 1
