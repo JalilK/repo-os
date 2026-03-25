@@ -6,6 +6,7 @@
 - `repo-os init <stack> <repo-name> --bootstrap`
 - `repo-os install-base <repo-path>`
 - `repo-os update-base <repo-path>`
+- `repo-os update-stack <stack> <repo-path> <repo-name>`
 - `repo-os doctor`
 - `repo-os explain-command-policy`
 - `repo-os delete <repo-name> <repo-name>`
@@ -43,3 +44,6 @@
 ## canonical command law
 
 If two commands do the same job, document one canonical command and treat the other as compatibility only.
+
+ACP-only repo updates use `update-base`.
+Stack file updates that require token rendering use `update-stack`.

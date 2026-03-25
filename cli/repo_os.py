@@ -29,6 +29,22 @@ BASE_EXECUTABLES = [
     "scripts/check_pr_body.py",
 ]
 
+STACK_COPY_PATHS = {
+    "swift-ios": [
+        ".swiftlint.yml",
+        "project.yml",
+        "scripts/verify.sh",
+        "App",
+        "Tests",
+    ],
+}
+
+STACK_EXECUTABLES = {
+    "swift-ios": [
+        "scripts/verify.sh",
+    ],
+}
+
 def fail(message: str) -> None:
     print(message)
     sys.exit(1)
@@ -43,7 +59,7 @@ def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
     )
     return result.stdout.strip() if capture else ""
 
-def replace_tokens(path: Path, repo_name: str) -> None:
+def replace_tokens_in_file(path: Path, repo_name: str) -> None:
     if path.is_dir():
         return
     try:
@@ -55,6 +71,13 @@ def replace_tokens(path: Path, repo_name: str) -> None:
     text = text.replace("BUNDLE_ID", bundle_id)
     text = text.replace("OWNER_HANDLE", "OWNER_HANDLE")
     path.write_text(text)
+
+def render_tokens_in_tree(root: Path, repo_name: str) -> None:
+    if root.is_file():
+        replace_tokens_in_file(root, repo_name)
+        return
+    for path in root.rglob("*"):
+        replace_tokens_in_file(path, repo_name)
 
 def rename_paths(root: Path, repo_name: str) -> None:
     for path in sorted(root.rglob("*APPNAME*"), reverse=True):
@@ -78,6 +101,12 @@ def ensure_executables(repo_path: Path) -> None:
         if target.exists():
             target.chmod(0o755)
 
+def ensure_stack_executables(repo_path: Path, stack: str) -> None:
+    for relative in STACK_EXECUTABLES.get(stack, []):
+        target = repo_path / relative
+        if target.exists():
+            target.chmod(0o755)
+
 def initialize_repo_files(stack: str, repo_name: str) -> Path:
     if stack != "swift-ios":
         fail("Supported stacks are swift-ios")
@@ -88,14 +117,13 @@ def initialize_repo_files(stack: str, repo_name: str) -> Path:
 
     destination.mkdir(parents=True)
     copy_tree(TEMPLATES / "base", destination)
-    copy_tree(TEMPLATES / "swift-ios", destination)
+    copy_tree(TEMPLATES / stack, destination)
 
     rename_paths(destination, repo_name)
-
-    for path in destination.rglob("*"):
-        replace_tokens(path, repo_name)
+    render_tokens_in_tree(destination, repo_name)
 
     ensure_executables(destination)
+    ensure_stack_executables(destination, stack)
     return destination
 
 def bootstrap_repo_path(destination: Path) -> None:
@@ -172,10 +200,43 @@ def update_base_in_existing_repo(repo_path: str) -> None:
     print(destination)
     print()
     print("Changed files")
-    if after:
-        print(after)
-    else:
-        print("No changes")
+    print(after if after else "No changes")
+    print()
+    print("Previous git status snapshot")
+    print(before if before else "Clean before update")
+
+def update_stack_in_existing_repo(stack: str, repo_path: str, repo_name: str) -> None:
+    if stack not in STACK_COPY_PATHS:
+        fail("Supported stacks are swift-ios")
+
+    destination = Path(repo_path).expanduser().resolve()
+    if not destination.exists():
+        fail(f"Repo path does not exist {destination}")
+    if not (destination / ".git").exists():
+        fail(f"Target is not a git repo {destination}")
+
+    before = run(["git", "status", "--short"], cwd=destination, capture=True)
+
+    for relative in STACK_COPY_PATHS[stack]:
+        src = TEMPLATES / stack / relative
+        dest = destination / relative
+        if src.is_dir():
+            copy_tree(src, dest)
+            render_tokens_in_tree(dest, repo_name)
+            rename_paths(dest, repo_name)
+        else:
+            copy_file(src, dest)
+            replace_tokens_in_file(dest, repo_name)
+
+    ensure_stack_executables(destination, stack)
+
+    after = run(["git", "status", "--short"], cwd=destination, capture=True)
+
+    print(f"Updated {stack} stack layer in existing repo")
+    print(destination)
+    print()
+    print("Changed files")
+    print(after if after else "No changes")
     print()
     print("Previous git status snapshot")
     print(before if before else "Clean before update")
@@ -244,7 +305,7 @@ def explain_command_policy() -> None:
 
 def main() -> None:
     if len(sys.argv) < 2:
-        fail("Usage repo_os.py <init|bootstrap|install-base|update-base|delete|doctor|explain-command-policy> ...")
+        fail("Usage repo_os.py <init|bootstrap|install-base|update-base|update-stack|delete|doctor|explain-command-policy> ...")
 
     command = sys.argv[1]
 
@@ -277,6 +338,11 @@ def main() -> None:
         if len(sys.argv) != 3:
             fail("Usage repo_os.py update-base <repo-path>")
         update_base_in_existing_repo(sys.argv[2])
+
+    elif command == "update-stack":
+        if len(sys.argv) != 5:
+            fail("Usage repo_os.py update-stack <stack> <repo-path> <repo-name>")
+        update_stack_in_existing_repo(sys.argv[2], sys.argv[3], sys.argv[4])
 
     elif command == "delete":
         if len(sys.argv) not in {3, 4, 5}:

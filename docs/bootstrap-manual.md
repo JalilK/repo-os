@@ -11,9 +11,10 @@ Initialize or maintain a repository with ACP memory, repo enforcement, CI, PR co
 ## Commands
 
 `python3 cli/repo_os.py init swift-ios <repo-name>`
-`python3 cli/repo_os.py init-and-bootstrap swift-ios <repo-name>`
+`python3 cli/repo_os.py init swift-ios <repo-name> --bootstrap`
 `python3 cli/repo_os.py install-base <repo-path>`
 `python3 cli/repo_os.py update-base <repo-path>`
+`python3 cli/repo_os.py update-stack swift-ios <repo-path> <repo-name>`
 
 ## What gets created
 
@@ -25,7 +26,9 @@ Initialize or maintain a repository with ACP memory, repo enforcement, CI, PR co
 
 ## Update an existing repo
 
-Use `update-base` when ACP is already installed and you want to pull the latest repo-os base layer into an existing repo without manually copying files.
+Use `update-base` when ACP is already installed and you want to pull the latest repo-os base layer into an existing repo.
+
+Use `update-stack` when you need updated stack template files rendered for a specific existing repo name.
 
 ## Delete a generated repo
 
@@ -34,4 +37,3 @@ Use `update-base` when ACP is already installed and you want to pull the latest 
 ## Rule
 
 Generated repos must always include command-first execution rules for LLM use.
-Existing repos should receive the ACP layer through `install-base` and receive later ACP updates through `update-base`.
