@@ -16,7 +16,7 @@ Every generated repo should include
 ## Primary commands
 
 - `python3 cli/repo_os.py init swift-ios <repo-name>`
-- `python3 cli/repo_os.py init-and-bootstrap swift-ios <repo-name>`
+- `python3 cli/repo_os.py init swift-ios <repo-name> --bootstrap`
 - `python3 cli/repo_os.py install-base <repo-path>`
 - `python3 cli/repo_os.py update-base <repo-path>`
 - `python3 cli/repo_os.py doctor`
@@ -46,15 +46,20 @@ Every generated repo should include
 - `./scripts/acp/acp.sh progress mark-in-progress <status-key>`
 - `./scripts/acp/acp.sh complete`
 
-## Output
+## Generated repo verification commands
 
-Generated repos receive
+- `./scripts/verify.sh lint`
+- `./scripts/verify.sh build`
+- `./scripts/verify.sh test`
+- `./scripts/verify.sh verify`
 
-- ACP folder structure
-- design and verification docs
-- local ACP command wrapper
-- CI workflows
-- PR template
-- CODEOWNERS
-- verification scripts
-- command-first execution rules
+## Command policy
+
+Use one canonical command per job.
+
+- repo creation without bootstrap uses `init`
+- repo creation with bootstrap uses `init --bootstrap`
+- full repo verification uses `acp verify`
+- layer verification uses `verify.sh lint`, `build`, `test`, and `verify`
+
+Compatibility aliases may exist, but they are not the documented surface.
